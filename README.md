@@ -2,9 +2,11 @@
 
 A fullscreen HTML slideshow presentation about how non-tech L&D professionals become builders in the AI era using Vibe Coding.
 
+**[View the live presentation](https://booya1986.github.io/vibe-code-for-L-D/)**
+
 ## Quick Start
 
-Just open `slideshow.html` in any modern browser — no build tools, no server required.
+Just open `slideshow.html` in any modern browser — no build tools, no server required. Or view it online via [GitHub Pages](https://booya1986.github.io/vibe-code-for-L-D/).
 
 ## What's Inside
 
