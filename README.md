@@ -48,6 +48,8 @@ A 29-slide interactive presentation covering:
 ├── assets/
 │   ├── images/             # All slide images (.png)
 │   └── media/              # Video (ai.mp4) and sound effects (sound3.mp3)
+├── .github/workflows/      # GitHub Pages deployment workflow
+├── index.html              # Redirect to slideshow.html for GitHub Pages
 ├── CLAUDE.md               # AI coding assistant guidance
 └── README.md
 ```

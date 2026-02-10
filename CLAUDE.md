@@ -10,6 +10,8 @@ Single-file Hebrew (RTL) fullscreen slideshow presentation — "מהפכת הו�
 
 Open `slideshow.html` directly in a browser. No server or build step needed.
 
+Live version: https://booya1986.github.io/vibe-code-for-L-D/
+
 ## Architecture
 
 ### Single File Structure (`slideshow.html`)
@@ -71,3 +73,6 @@ Currently: `{ 2: new Audio('assets/media/sound3.mp3') }`
 - When overriding `prd` layout direction (e.g., centering), use inline `style="flex-direction:column"` on the slide div
 - Images go in `assets/images/`, media (video/audio) in `assets/media/`
 - Reference assets with relative paths: `assets/images/filename.png`, `assets/media/filename.mp4`
+
+## Deployment
+Site auto-deploys to GitHub Pages via `.github/workflows/pages.yml` on every push to `main`. `index.html` redirects to `slideshow.html`.
