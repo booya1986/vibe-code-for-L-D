@@ -1,0 +1,2535 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workshop Slideshow</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Heebo', sans-serif;
+    }
+
+    body {
+      background: #1b1b1b;
+      color: #c5c1b9;
+    }
+
+    /* ── Slide Container ── */
+    .slideshow {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Individual Slides ── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px 60px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateX(-20px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+
+    .slide.exit-left {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    .slide.exit-right {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    /* ── Slide Content Placeholders ── */
+    .slide-number {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #22C55E;
+      text-shadow: 0 0 8px rgba(34, 197, 94, 0.6), 0 0 20px rgba(34, 197, 94, 0.3);
+      margin-bottom: 10px;
+    }
+
+    .slide h1 {
+      font-size: clamp(1.4rem, 6vw, 2rem);
+      font-weight: 700;
+      color: #dcdad5;
+      text-align: center;
+      line-height: 1.3;
+      margin-bottom: 12px;
+      text-shadow: 0 0 30px rgba(34, 197, 94, 0.1);
+    }
+
+    .slide p {
+      font-size: clamp(0.85rem, 3.5vw, 1rem);
+      font-weight: 300;
+      color: #a09d96;
+      text-align: center;
+      max-width: 100%;
+      line-height: 1.7;
+    }
+
+    /* ── Navigation Buttons ── */
+    .nav-buttons {
+      position: fixed;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      display: flex;
+      justify-content: space-between;
+      padding: 0 6px;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      pointer-events: auto;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(197, 193, 185, 0.2);
+      background: rgba(27, 27, 27, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #c5c1b9;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-btn:hover {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: #22C55E;
+      color: #22C55E;
+      transform: none;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.1), inset 0 0 15px rgba(34, 197, 94, 0.05);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.95);
+      transition-duration: 0.1s;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.25;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .nav-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ── Dot Navigation ── */
+    .dot-nav {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      z-index: 100;
+      padding: 5px 10px;
+      border-radius: 40px;
+      background: rgba(27, 27, 27, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(34, 197, 94, 0.1);
+      max-width: calc(100vw - 20px);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .dot-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: rgba(197, 193, 185, 0.25);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      outline: none;
+    }
+
+    .dot:hover {
+      background: rgba(197, 193, 185, 0.5);
+      transform: scale(1.2);
+    }
+
+    .dot:hover {
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .dot.active {
+      background: #22C55E;
+      width: 16px;
+      border-radius: 4px;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.6), 0 0 20px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.15);
+    }
+
+    /* ── Progress Bar ── */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #22C55E, #4ade80);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 200;
+      border-radius: 0 2px 2px 0;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.25);
+    }
+
+    /* ── Keyboard Hint (hidden on mobile) ── */
+    .keyboard-hint {
+      display: none;
+    }
+
+    /* ── Slide Variants (for different content layouts) ── */
+    .slide[data-layout="title"] {
+      background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.03) 40%, transparent 70%);
+    }
+
+    .slide[data-layout="content"] {
+      align-items: flex-start;
+      padding: 24px 20px 60px;
+    }
+
+    .slide[data-layout="split"] {
+      flex-direction: column;
+      gap: 20px;
+      padding: 24px 16px 60px;
+    }
+
+    /* ── Guru Slide ── */
+    .slide[data-layout="guru"] {
+      justify-content: center;
+    }
+
+    .guru-img {
+      max-height: 38vh;
+      max-width: 85%;
+      object-fit: contain;
+      filter:
+        drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))
+        drop-shadow(0 0 15px rgba(34, 197, 94, 0.35))
+        drop-shadow(0 0 30px rgba(34, 197, 94, 0.15));
+      margin-bottom: 10px;
+    }
+
+    /* ── About Slide ── */
+    .slide[data-layout="about"] {
+      background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+      flex-direction: column;
+      padding: 20px 16px 60px;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .about-photo {
+      flex-shrink: 0;
+      max-height: 22vh;
+      max-width: 50%;
+      object-fit: contain;
+      filter:
+        drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))
+        drop-shadow(0 0 15px rgba(34, 197, 94, 0.35))
+        drop-shadow(0 0 30px rgba(34, 197, 94, 0.15));
+    }
+
+    .about-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 100%;
+    }
+
+    .about-info .slide-number {
+      margin-bottom: 8px;
+    }
+
+    .about-info h1 {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .about-info .about-role {
+      font-size: clamp(0.85rem, 3.5vw, 1rem);
+      font-weight: 400;
+      color: #22C55E;
+      text-align: center;
+      margin-bottom: 8px;
+      max-width: none;
+      text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+    }
+
+    .about-info .about-bio {
+      font-size: clamp(0.78rem, 3vw, 0.9rem);
+      font-weight: 300;
+      color: #a09d96;
+      text-align: center;
+      max-width: none;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+
+    .about-tags {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .about-tag {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-radius: 12px;
+      background: rgba(34, 197, 94, 0.06);
+      border: 1px solid rgba(34, 197, 94, 0.15);
+      color: #c5c1b9;
+      font-size: 0.75rem;
+      font-weight: 400;
+      line-height: 1.5;
+      transition: all 0.3s;
+    }
+
+    .about-tag:hover {
+      border-color: rgba(34, 197, 94, 0.4);
+      background: rgba(34, 197, 94, 0.1);
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.15);
+    }
+
+    .about-tag-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      color: #22C55E;
+    }
+
+    /* ── Quote Slide ── */
+    .slide[data-layout="quote"] {
+      background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+      padding: 24px 20px 60px;
+      gap: 0;
+    }
+
+    .slide .quote-text {
+      font-size: clamp(1.05rem, 5vw, 1.4rem);
+      font-weight: 300;
+      color: #c5c1b9;
+      text-align: center;
+      max-width: 100%;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .quote-text::before {
+      content: '\201C';
+      font-size: 3rem;
+      color: rgba(34, 197, 94, 0.3);
+      position: absolute;
+      top: -20px;
+      right: -8px;
+      font-family: Georgia, serif;
+      line-height: 1;
+    }
+
+    .quote-text mark {
+      background: none;
+      color: #22C55E;
+      font-weight: 600;
+      text-shadow: 0 0 12px rgba(34, 197, 94, 0.5), 0 0 30px rgba(34, 197, 94, 0.2);
+    }
+
+    .quote-source {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 30px;
+      background: rgba(34, 197, 94, 0.06);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      color: #a09d96;
+      font-size: 0.72rem;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+
+    .quote-source:hover {
+      border-color: #22C55E;
+      color: #22C55E;
+      background: rgba(34, 197, 94, 0.1);
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+    }
+
+    .quote-source svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ── Timeline Slide ── */
+    .slide[data-layout="timeline"] {
+      background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+      padding: 20px 16px 60px;
+      gap: 12px;
+    }
+
+    .timeline-track {
+      display: flex;
+      flex-direction: column;
+      direction: rtl;
+      align-items: stretch;
+      width: 100%;
+      position: relative;
+      margin-top: 10px;
+      padding-right: 0;
+    }
+
+    /* Vertical connecting line */
+    .timeline-track::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      bottom: 28px;
+      right: 18px;
+      left: auto;
+      width: 2px;
+      height: auto;
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.4), rgba(34, 197, 94, 0.15));
+      z-index: 0;
+    }
+
+    .tl-item {
+      flex: none;
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 2px 14px;
+      position: relative;
+      z-index: 1;
+      padding: 10px 0;
+      align-items: center;
+    }
+
+    .tl-node {
+      grid-column: 1;
+      grid-row: 1 / 4;
+      align-self: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #1b1b1b;
+      border: 2px solid rgba(34, 197, 94, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.15);
+    }
+
+    .tl-node svg {
+      width: 18px;
+      height: 18px;
+      stroke: #c5c1b9;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .tl-item:last-child .tl-node {
+      background: #1b1b1b;
+      border-color: #22C55E;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.5), 0 0 30px rgba(34, 197, 94, 0.25);
+    }
+
+    .tl-item:last-child .tl-node svg {
+      stroke: #22C55E;
+    }
+
+    .tl-year {
+      grid-column: 2;
+      grid-row: 3;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #22C55E;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+      text-align: right;
+    }
+
+    .tl-title {
+      grid-column: 2;
+      grid-row: 1;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #dcdad5;
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    .tl-desc {
+      grid-column: 2;
+      grid-row: 2;
+      font-size: 0.76rem;
+      font-weight: 300;
+      color: #a09d96;
+      text-align: right;
+      line-height: 1.5;
+      max-width: none;
+    }
+
+    /* ── Content Cards Slide ── */
+    .slide[data-layout="cards"] {
+      background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+      padding: 20px 16px 60px;
+      gap: 0;
+    }
+
+    .slide[data-layout="cards"] h1 {
+      margin-bottom: 6px;
+    }
+
+    .flow-chart {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 8px 0 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .flow-step {
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: rgba(34, 197, 94, 0.06);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      color: #dcdad5;
+      font-size: 0.78rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .flow-arrow {
+      color: #22C55E;
+      font-size: 1rem;
+      padding: 0 6px;
+      text-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    }
+
+    .cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .content-card {
+      flex: none;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(34, 197, 94, 0.04);
+      border: 1px solid rgba(34, 197, 94, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.3s;
+    }
+
+    .content-card:hover {
+      border-color: rgba(34, 197, 94, 0.3);
+      background: rgba(34, 197, 94, 0.07);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(34, 197, 94, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .card-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #dcdad5;
+      line-height: 1.4;
+    }
+
+    .card-desc {
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: #a09d96;
+      line-height: 1.6;
+    }
+
+    /* ── PRD Slide ── */
+    .slide[data-layout="prd"] {
+      background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+      flex-direction: column;
+      padding: 14px 16px 50px;
+      gap: 16px;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .prd-content {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      max-width: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .prd-content .slide-number {
+      margin-bottom: 8px;
+    }
+
+    .prd-content h1 {
+      text-align: right;
+      font-size: clamp(1.4rem, 6vw, 1.75rem);
+      margin-bottom: 4px;
+    }
+
+    .prd-content .prd-subtitle {
+      font-size: clamp(1rem, 4.2vw, 1.2rem);
+      font-weight: 300;
+      color: #a09d96;
+      text-align: right;
+      max-width: none;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .prd-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .prd-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(34, 197, 94, 0.05);
+      border: 1px solid rgba(34, 197, 94, 0.12);
+      color: #c5c1b9;
+      font-size: 0.95rem;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    .prd-item-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .prd-item-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .prd-tip {
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(34, 197, 94, 0.06);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      width: 100%;
+    }
+
+    .prd-tip-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #22C55E;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+    }
+
+    .prd-tip-text {
+      font-size: 0.76rem;
+      font-weight: 300;
+      color: #a09d96;
+      line-height: 1.6;
+    }
+
+    .prd-visual {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .prd-frame {
+      border: 2px solid #22C55E;
+      border-radius: 14px;
+      padding: 4px;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.4), 0 0 30px rgba(34, 197, 94, 0.15), inset 0 0 12px rgba(34, 197, 94, 0.05);
+      max-height: 100%;
+      overflow: hidden;
+    }
+
+    .prd-frame img {
+      display: block;
+      max-height: 100%;
+      max-width: 100%;
+      border-radius: 10px;
+      object-fit: contain;
+    }
+
+    .prd-frame-large img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    /* Terminal layout (slide 25) */
+    .terminal-frame {
+      background: #0d1117;
+      border: 1.5px solid rgba(34, 197, 94, 0.35);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.15), 0 0 40px rgba(34, 197, 94, 0.06);
+      width: 100%;
+      flex-shrink: 1;
+    }
+
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(34, 197, 94, 0.08);
+      border-bottom: 1px solid rgba(34, 197, 94, 0.15);
+    }
+
+    .terminal-bar .browser-dots span {
+      width: 10px;
+      height: 10px;
+    }
+
+    .terminal-bar-title {
+      font-size: 0.58rem;
+      color: rgba(34, 197, 94, 0.5);
+      font-family: 'Courier New', monospace;
+      margin-inline-start: 8px;
+    }
+
+    .terminal-body {
+      padding: 12px 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.65rem;
+      line-height: 1.6;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .terminal-prompt {
+      color: #22C55E;
+      text-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+    }
+
+    .terminal-cmd {
+      color: #e6edf3;
+    }
+
+    .terminal-output {
+      color: rgba(34, 197, 94, 0.45);
+      margin-top: 10px;
+    }
+
+    .terminal-output .file-created {
+      color: rgba(34, 197, 94, 0.7);
+    }
+
+    .cc-points {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cc-point {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .cc-point-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .cc-point-icon svg {
+      width: 14px;
+      height: 14px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .cc-point-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #22C55E;
+      margin-bottom: 2px;
+    }
+
+    .cc-point-desc {
+      font-size: 0.82rem;
+      font-weight: 300;
+      color: #a09d96;
+      line-height: 1.55;
+    }
+
+    /* Checklist layout (slide 27) */
+    .checklist-wrap {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .checklist-icon-wrap {
+      flex-shrink: 0;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 2px solid #22C55E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.35), 0 0 70px rgba(34, 197, 94, 0.12);
+    }
+
+    .checklist-icon-wrap svg {
+      width: 36px;
+      height: 36px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.5));
+    }
+
+    .checklist-items {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 100%;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .checklist-check {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      border: 2px solid #22C55E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .checklist-check svg {
+      width: 16px;
+      height: 16px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .checklist-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #22C55E;
+      margin-bottom: 4px;
+    }
+
+    .checklist-desc {
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: #a09d96;
+      line-height: 1.6;
+    }
+
+    /* Contact layout (slide 28) */
+    .contact-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      justify-content: center;
+      max-width: 100%;
+    }
+
+    .contact-card {
+      flex: 0 1 calc(50% - 6px);
+      min-width: 0;
+      padding: 14px 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(34, 197, 94, 0.15);
+      text-align: center;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .contact-card:hover {
+      border-color: rgba(34, 197, 94, 0.4);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.12);
+    }
+
+    .contact-card-icon {
+      width: 34px;
+      height: 34px;
+      margin: 0 auto 8px;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .contact-card-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .contact-card-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #22C55E;
+      margin-bottom: 6px;
+    }
+
+    .contact-card-handle {
+      font-size: 0.72rem;
+      color: #e0dcd5;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+
+    .contact-card-desc {
+      font-size: 0.66rem;
+      font-weight: 300;
+      color: #a09d96;
+      line-height: 1.5;
+    }
+
+    .prd-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 30px;
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      color: #22C55E;
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s;
+      text-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .prd-link:hover {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: #22C55E;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.3), 0 0 30px rgba(34, 197, 94, 0.1);
+    }
+
+    .prd-link svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ── Agents Slide ── */
+    .slide[data-layout="agents"] {
+      background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+      padding: 16px 16px 60px;
+      gap: 0;
+    }
+
+    .slide[data-layout="agents"] h1 {
+      font-size: clamp(1.1rem, 5vw, 1.5rem);
+      margin-bottom: 4px;
+    }
+
+    .slide[data-layout="agents"] .agents-subtitle {
+      font-size: clamp(0.78rem, 3vw, 0.88rem);
+      font-weight: 300;
+      color: #a09d96;
+      text-align: center;
+      max-width: none;
+      margin-bottom: 10px;
+    }
+
+    .agents-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .agent-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .agent-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.08);
+      border: 2px solid rgba(34, 197, 94, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .agent-avatar svg {
+      width: 16px;
+      height: 16px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .agent-orchestrator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .agent-orchestrator .agent-avatar {
+      width: 48px;
+      height: 48px;
+      border-color: #22C55E;
+      background: rgba(34, 197, 94, 0.12);
+      box-shadow: 0 0 16px rgba(34, 197, 94, 0.4), 0 0 40px rgba(34, 197, 94, 0.15);
+    }
+
+    .agent-orchestrator .agent-avatar svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .agent-label {
+      font-size: 0.6rem;
+      font-weight: 500;
+      color: #a09d96;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .agent-orchestrator .agent-label {
+      color: #22C55E;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+    }
+
+    /* Vertical trunk from orchestrator down to branch line */
+    .agent-trunk {
+      width: 2px;
+      height: 20px;
+      background: linear-gradient(180deg, #22C55E, rgba(34, 197, 94, 0.4));
+    }
+
+    .agent-sub-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      position: relative;
+      padding-top: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Hide connecting lines on mobile */
+    .agent-sub-row::before {
+      display: none;
+    }
+
+    .agent-sub-row .agent-node {
+      position: relative;
+    }
+
+    .agent-sub-row .agent-node::before {
+      display: none;
+    }
+
+    .agent-sub-row .agent-avatar {
+      background: #1b1b1b;
+    }
+
+    .agents-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .agent-card {
+      flex: none;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(34, 197, 94, 0.04);
+      border: 1px solid rgba(34, 197, 94, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.3s;
+    }
+
+    .agent-card:hover {
+      border-color: rgba(34, 197, 94, 0.3);
+      background: rgba(34, 197, 94, 0.07);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+    }
+
+    .agent-card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .agent-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(34, 197, 94, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .agent-card-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .agent-card-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #dcdad5;
+      line-height: 1.4;
+    }
+
+    .agent-card-desc {
+      font-size: 0.72rem;
+      font-weight: 300;
+      color: #a09d96;
+      line-height: 1.6;
+    }
+
+    /* ── MVP Slide ── */
+    .slide[data-layout="mvp"] {
+      background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+      flex-direction: column;
+      padding: 14px 16px 50px;
+      gap: 16px;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .mvp-content {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      max-width: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .mvp-content .slide-number {
+      margin-bottom: 4px;
+    }
+
+    .mvp-content h1 {
+      text-align: right;
+      font-size: clamp(1.4rem, 6vw, 1.75rem);
+      margin-bottom: 4px;
+    }
+
+    .mvp-content .mvp-subtitle {
+      font-size: clamp(1rem, 4.2vw, 1.2rem);
+      font-weight: 600;
+      color: #22C55E;
+      text-align: right;
+      max-width: none;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+    }
+
+    .mvp-points {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .mvp-point {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .mvp-point-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .mvp-point-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .mvp-point-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .mvp-point-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #dcdad5;
+      line-height: 1.4;
+    }
+
+    .mvp-point-desc {
+      font-size: 0.85rem;
+      font-weight: 300;
+      color: #a09d96;
+      line-height: 1.6;
+    }
+
+    /* Mac browser frame */
+    .mvp-visual {
+      flex: 1;
+      min-height: 0;
+      max-width: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .mvp-visual .browser-frame {
+      flex: none;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .mvp-visual .browser-frame img {
+      min-height: 0;
+      object-fit: contain;
+      object-position: top;
+      max-height: 100%;
+    }
+
+    .browser-frame {
+      border: 2px solid #22C55E;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 14px rgba(34, 197, 94, 0.35), 0 0 40px rgba(34, 197, 94, 0.12);
+    }
+
+    .browser-bar {
+      background: rgba(34, 197, 94, 0.08);
+      border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .browser-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .browser-dots span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(34, 197, 94, 0.4);
+      background: transparent;
+    }
+
+    .browser-dots span:nth-child(1) { border-color: rgba(255,95,87,0.5); }
+    .browser-dots span:nth-child(2) { border-color: rgba(255,189,46,0.5); }
+    .browser-dots span:nth-child(3) { border-color: rgba(39,201,63,0.5); }
+
+    .browser-url {
+      flex: 1;
+      background: rgba(27, 27, 27, 0.6);
+      border: 1px solid rgba(34, 197, 94, 0.15);
+      border-radius: 6px;
+      padding: 3px 7px;
+      font-size: 0.55rem;
+      color: rgba(34, 197, 94, 0.5);
+      font-family: monospace;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .browser-frame img {
+      display: block;
+      width: 100%;
+      object-fit: contain;
+    }
+
+    /* ── Tools Slide ── */
+    .slide[data-layout="tools"] {
+      background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+      padding: 16px 16px 60px;
+      gap: 0;
+    }
+
+    .slide[data-layout="tools"] h1 {
+      font-size: clamp(1.1rem, 5vw, 1.5rem);
+      margin-bottom: 4px;
+    }
+
+    .slide[data-layout="tools"] .tools-subtitle {
+      font-size: clamp(0.78rem, 3vw, 0.88rem);
+      font-weight: 300;
+      color: #a09d96;
+      text-align: center;
+      max-width: 100%;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .tool-card {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(34, 197, 94, 0.04);
+      border: 1px solid rgba(34, 197, 94, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.3s;
+    }
+
+    .tool-card:hover {
+      border-color: rgba(34, 197, 94, 0.3);
+      background: rgba(34, 197, 94, 0.07);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+    }
+
+    .tool-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tool-card-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(34, 197, 94, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .tool-card-icon svg {
+      width: 17px;
+      height: 17px;
+      stroke: #22C55E;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .tool-card-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #dcdad5;
+    }
+
+    .tool-card-edge {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #22C55E;
+      line-height: 1.5;
+      text-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .tool-card-when {
+      font-size: 0.72rem;
+      font-weight: 300;
+      color: #a09d96;
+      line-height: 1.55;
+    }
+
+    .tool-card-when strong {
+      color: #c5c1b9;
+      font-weight: 500;
+    }
+
+    .tools-tip {
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: rgba(34, 197, 94, 0.06);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      max-width: 100%;
+      width: 100%;
+      text-align: center;
+    }
+
+    .tools-tip-text {
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: #a09d96;
+      line-height: 1.6;
+    }
+
+    .tools-tip-text b {
+      color: #22C55E;
+      font-weight: 600;
+    }
+
+    /* ── Video Slide ── */
+    .slide[data-layout="video"] {
+      padding: 16px 8px 60px;
+    }
+
+    .slide-video-player {
+      width: 100%;
+      max-height: 70%;
+      border-radius: 8px;
+      background: #000;
+      object-fit: contain;
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.1);
+    }
+
+    /* ── Mobile helper classes (replacing inline styles) ── */
+    .heading-cc {
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+      font-weight: 700;
+      color: #dcdad5;
+      text-align: right;
+    }
+
+    .heading-checklist {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #dcdad5;
+      text-align: center;
+    }
+
+    .contact-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 14px;
+    }
+
+    .heading-contact {
+      font-size: 1.3rem;
+      text-align: center;
+      font-weight: 700;
+      color: #dcdad5;
+    }
+
+    .contact-subtitle {
+      font-size: 0.88rem;
+      color: #a09d96;
+      font-weight: 300;
+      text-align: center;
+    }
+
+    .quote-text-closing {
+      font-size: clamp(1.2rem, 5.5vw, 1.5rem) !important;
+      max-width: 100% !important;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar" id="progressBar"></div>
+
+  <!-- Slideshow -->
+  <div class="slideshow" id="slideshow">
+
+    <!-- Slide 1 -->
+    <div class="slide active" data-layout="title">
+      <span class="slide-number">עם כוח גדול באה הזדמנות גדולה</span>
+      <h1>מהפכת הוייב-קודינג</h1>
+      <p>איך Non-Tech People הופכים ל-Builders בעידן ה-AI</p>
+    </div>
+
+    <!-- Slide 2 — Video -->
+    <div class="slide slide-video" data-layout="video">
+      <video class="slide-video-player" src="assets/media/ai.mp4" controls playsinline></video>
+    </div>
+
+    <!-- Slide 3 — Guru -->
+    <div class="slide" data-layout="guru">
+      <img class="guru-img" src="assets/images/3.png" alt="AI Guru">
+      <span class="slide-number">גם לכם נמאס כבר מכל ה-AI גורו'ס?</span>
+      <h1>אז היום זה לא הולך להיות כזה</h1>
+    </div>
+
+    <!-- Slide 4 — Lego -->
+    <div class="slide" data-layout="guru">
+      <img class="guru-img" src="assets/images/4.png" alt="Kid in a toy store">
+      <span class="slide-number">יותר כמו</span>
+      <h1>ילד בחנות צעצועים</h1>
+    </div>
+
+    <!-- Slide 5 — About Me -->
+    <div class="slide" data-layout="about">
+      <img class="about-photo" src="assets/images/5.png" alt="אבי לוי">
+      <div class="about-info">
+        <span class="slide-number">מי אני?</span>
+        <h1>אבי לוי</h1>
+        <p class="about-role">מוביל צוות הלמידה והפיתוח · בנק הפועלים</p>
+        <p class="about-bio">בונה כלים שעוזרים לאנשים ולארגונים ללמוד מהר יותר, טוב יותר ועם השפעה מדידה. מתעניין בבינה מלאכותית מעשית, תהליכי למידה, והפיכת ״הדרכה״ לשיפור ביצועים אמיתי.</p>
+        <div class="about-tags">
+          <div class="about-tag">
+            <span class="about-tag-icon">🤖</span>
+            זרימות למידה מבוססות AI — תוכן, הערכה, משוב, אנליטיקה
+          </div>
+          <div class="about-tag">
+            <span class="about-tag-icon">⚡</span>
+            אוטומציה עם מערכות דמויות סוכן — n8n + API + הנחיות חכמות
+          </div>
+          <div class="about-tag">
+            <span class="about-tag-icon">🛠</span>
+            מיקרו-כלים שמסירים חיכוכים עבור צוותי הלמידה והפיתוח
+          </div>
+          <div class="about-tag">
+            <span class="about-tag-icon">📊</span>
+            לוחות מחוונים + מדידה — כי ויברציות אינן מדדי ביצועים
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6 — Quote -->
+    <div class="slide" data-layout="quote">
+      <span class="slide-number">Infosys — Enterprise AI Readiness</span>
+      <p class="quote-text">While companies expect productivity gains of up to <mark>40%</mark>, only <mark>2% of firms</mark> are ready for AI across all five dimensions: <mark>strategy, governance, talent, data and technology</mark>.</p>
+      <a class="quote-source" href="https://www.infosys.com/newsroom/press-releases/2024/enterprise-ai-readiness.html" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Read the full article — Infosys
+      </a>
+    </div>
+
+    <!-- Slide 7 — Quote -->
+    <div class="slide" data-layout="quote">
+      <span class="slide-number">World Economic Forum — AI-Ready Workforce</span>
+      <p class="quote-text">The tipping point for the adoption of new ideas at which benefits start to accrue is between <mark>10% and 25%</mark> of adopters.</p>
+      <a class="quote-source" href="https://www.weforum.org/stories/2025/01/unlocking-human-potential-building-a-responsible-ai-ready-workforce-for-the-future/" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Read the full article — World Economic Forum
+      </a>
+    </div>
+
+    <!-- Slide 8 — Quote -->
+    <div class="slide" data-layout="quote">
+      <span class="slide-number">TechRadar — AI Usage at Work</span>
+      <p class="quote-text"><mark>50%</mark> stating that AI usage would make them appear <mark>lazy, incompetent or even like cheaters</mark>.</p>
+      <a class="quote-source" href="https://www.techradar.com/pro/many-workers-say-theyre-embarassed-to-use-ai-at-work-despite-bosses-wanting-them-to-do-more" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Read the full article — TechRadar
+      </a>
+    </div>
+
+    <!-- Slide 9 — Timeline -->
+    <div class="slide" data-layout="timeline">
+      <span class="slide-number">The Evolution of AI</span>
+      <h1>קיצור תולדות הבינה מלאכותית</h1>
+      <div class="timeline-track">
+        <div class="tl-item">
+          <div class="tl-node"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <span class="tl-year">2022</span>
+          <span class="tl-title">עידן הצ׳אטבוטים</span>
+          <span class="tl-desc">ChatGPT, שיחות עם AI, שאלות ותשובות</span>
+        </div>
+        <div class="tl-item">
+          <div class="tl-node"><svg viewBox="0 0 24 24"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+          <span class="tl-year">2023</span>
+          <span class="tl-title">העידן המותאם</span>
+          <span class="tl-desc">Custom GPTs, פרומפטים מתקדמים, RAG</span>
+        </div>
+        <div class="tl-item">
+          <div class="tl-node"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+          <span class="tl-year">2024</span>
+          <span class="tl-title">עידן ה-No-Code</span>
+          <span class="tl-desc">Cursor, Lovable, בנייה בלי קוד</span>
+        </div>
+        <div class="tl-item">
+          <div class="tl-node"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <span class="tl-year">2025</span>
+          <span class="tl-title">עידן האוטומציה</span>
+          <span class="tl-desc">n8n, Make, תהליכים אוטומטיים</span>
+        </div>
+        <div class="tl-item">
+          <div class="tl-node"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="4"/><line x1="8" y1="16" x2="8" y2="16.01"/><line x1="16" y1="16" x2="16" y2="16.01"/><path d="M9 20v1"/><path d="M15 20v1"/></svg></div>
+          <span class="tl-year">2025+</span>
+          <span class="tl-title">העידן האג׳נטי</span>
+          <span class="tl-desc">סוכני AI עצמאיים, קבלת החלטות, פעולה</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10 — Section Opener -->
+    <div class="slide" data-layout="title">
+      <span class="slide-number">Part 1</span>
+      <h1>להיכנס לוייב בכתיבת קוד</h1>
+      <p>איך עוברים מרעיון למציאות באמצעות תהליכי Ideation, מסמך PRD (אפיון מוצר) ועבודה מול סוכני AI.</p>
+    </div>
+
+    <!-- Slide 11 — Ideation -->
+    <div class="slide" data-layout="cards">
+      <span class="slide-number">Ideation</span>
+      <h1>הניצוץ – Ideation וזיהוי הזדמנויות</h1>
+      <p>מבעיה בשטח למוצר למידה עובד.</p>
+
+      <div class="flow-chart">
+        <div class="flow-step">בעיה</div>
+        <span class="flow-arrow">←</span>
+        <div class="flow-step">צורך</div>
+        <span class="flow-arrow">←</span>
+        <div class="flow-step">פתרון טכנולוגי (MVP)</div>
+      </div>
+
+      <div class="cards-grid">
+        <div class="content-card">
+          <div class="card-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <span class="card-title">הזיהוי: איפה חסר לנו כלי?</span>
+          <span class="card-desc">מחשבון ROI, צ׳אטבוט לידע ארגוני, דשבורד למידה — זיהוי הפערים הקיימים בשטח.</span>
+        </div>
+        <div class="content-card">
+          <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+          <span class="card-title">חשיבה מוצרית</span>
+          <span class="card-desc">הגדרת ה-Value Proposition — מה הכלי הזה יפתור למשתמשים שלנו?</span>
+        </div>
+        <div class="content-card">
+          <div class="card-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <span class="card-title">בחירת ה-Vibe</span>
+          <span class="card-desc">האם זה כלי לשימוש פנימי מהיר או מוצר קצה? הגישה משפיעה על כל ההמשך.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 12 — PRD -->
+    <div class="slide" data-layout="prd">
+      <div class="prd-content">
+        <span class="slide-number">PRD as a Prompt</span>
+        <h1>המצפן – ה-PRD כפרומפט המרכזי</h1>
+        <p class="prd-subtitle">מסמך ה-PRD: השפה המשותפת בינך לבין ה-AI.</p>
+
+        <div class="prd-items">
+          <div class="prd-item">
+            <span class="prd-item-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            User Personas — למי הכלי מיועד, מה הכאב שלו
+          </div>
+          <div class="prd-item">
+            <span class="prd-item-icon"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+            Core Features — יכולות הליבה של המוצר
+          </div>
+          <div class="prd-item">
+            <span class="prd-item-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+            User Flow — מסע המשתמש מקצה לקצה
+          </div>
+        </div>
+
+        <div class="prd-tip">
+          <div class="prd-tip-label">💡 הטיפ המקצועי</div>
+          <div class="prd-tip-text">ככל שה-PRD מפורט יותר, ה-AI מבין טוב יותר. זה לא מסמך בירוקרטי — זה Context Engineering בפועל.</div>
+        </div>
+      </div>
+
+      <div class="prd-visual">
+        <div class="prd-frame">
+          <img src="assets/images/12.png" alt="PRD Template Screenshot">
+        </div>
+        <a class="prd-link" href="https://booya1986.github.io/PRD_Tamplet/" target="_blank">
+          <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          תבנית PRD — פתח כאן
+        </a>
+      </div>
+    </div>
+
+    <!-- Slide 13 — Agentic Workflow -->
+    <div class="slide" data-layout="agents">
+      <span class="slide-number">The Agentic Workflow</span>
+      <h1>עבודה מול סוכני AI</h1>
+      <p class="agents-subtitle">לא ״לבקש״, אלא ״לנהל״: עבודה מול סוכני AI.</p>
+
+      <div class="agents-visual">
+        <!-- Orchestrator -->
+        <div class="agent-orchestrator">
+          <div class="agent-avatar"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <span class="agent-label">אתה — האורקסטרייטור</span>
+        </div>
+        <div class="agent-trunk"></div>
+        <!-- Sub-agents row -->
+        <div class="agent-sub-row">
+          <div class="agent-node">
+            <div class="agent-avatar"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+            <span class="agent-label">מנהל מוצר</span>
+          </div>
+          <div class="agent-node">
+            <div class="agent-avatar"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+            <span class="agent-label">מפתח</span>
+          </div>
+          <div class="agent-node">
+            <div class="agent-avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
+            <span class="agent-label">מעצב UX</span>
+          </div>
+          <div class="agent-node">
+            <div class="agent-avatar"><svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></div>
+            <span class="agent-label">QA & Deploy</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="agents-cards">
+        <div class="agent-card">
+          <div class="agent-card-head">
+            <span class="agent-card-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>
+            <span class="agent-card-title">Context Engineering</span>
+          </div>
+          <span class="agent-card-desc">איך מזריקים את ה-PRD לתוך Claude Code או Lovable — כדי שה-AI יבין מה לבנות, למי ולמה.</span>
+        </div>
+        <div class="agent-card">
+          <div class="agent-card-head">
+            <span class="agent-card-icon"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
+            <span class="agent-card-title">שיטת הפינג-פונג</span>
+          </div>
+          <span class="agent-card-desc">בניית רכיב ← בדיקה ← תיקון. תהליך איטרטיבי שמתכנס למוצר עובד צעד אחרי צעד.</span>
+        </div>
+        <div class="agent-card">
+          <div class="agent-card-head">
+            <span class="agent-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+            <span class="agent-card-title">ניהול שגיאות</span>
+          </div>
+          <span class="agent-card-desc">מה עושים כשה-AI ״נתקע״? חזרה לאפיון, פירוק למשימות קטנות יותר, והתחלה מחדש של ההקשר.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 14 — MVP -->
+    <div class="slide" data-layout="mvp">
+      <div class="mvp-content">
+        <span class="slide-number">Build, Ship, Learn</span>
+        <h1>ה-Vibe של הביצוע – מהרעיון ל-MVP הראשון</h1>
+        <p class="mvp-subtitle">Build, Ship, Learn</p>
+
+        <div class="mvp-points">
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">מהירות מעל שלמות</span>
+              <span class="mvp-point-desc">איך מגיעים לגרסה עובדת תוך פחות משעה. לא מחכים לשלמות — מריצים, לומדים, משפרים.</span>
+            </div>
+          </div>
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">השלמת פערים</span>
+              <span class="mvp-point-desc">איפה אנחנו (אנשי הלמידה) עושים QA ואיפה אנחנו נותנים ל-AI להוביל.</span>
+            </div>
+          </div>
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">התוצאה</span>
+              <span class="mvp-point-desc">מוצר מוחשי שאפשר להציג לבעלי עניין (Stakeholders) — לא רעיון, אלא דמו עובד.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mvp-visual">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="browser-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="browser-url">localhost:3000</div>
+          </div>
+          <img src="assets/images/14.png" alt="MVP Screenshot">
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 15 — Section Opener Part 2 -->
+    <div class="slide" data-layout="title">
+      <span class="slide-number">Part 2</span>
+      <h1>ארגז הכלים של ה-Builders</h1>
+      <p>סקירת הכלים המובילים (Lovable, Claude Code, Gemini) והבנה איפה כל אחד מהם נותן לנו את ה-Edge.</p>
+    </div>
+
+    <!-- Slide 16 — Tools Comparison -->
+    <div class="slide" data-layout="tools">
+      <span class="slide-number">The Builder's Toolbox</span>
+      <h1>ארגז הכלים של ה-Builders: איפה ה-Edge שלכם?</h1>
+      <p class="tools-subtitle">בחירת הכלי הנכון היא ההבדל בין ״עוד ניסוי AI״ למוצר עובד שיוצר ROI אמיתי בארגון.</p>
+
+      <div class="tools-grid">
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span>
+            <span class="tool-card-name">Lovable</span>
+          </div>
+          <span class="tool-card-edge">Full-Stack Speed — הופך PRD לאפליקציה עובדת (Frontend + Backend) תוך דקות.</span>
+          <span class="tool-card-when"><strong>מתי?</strong> MVP מהיר, אפליקציית Disposable לפתרון בעיה נקודתית, או כלי עם UI מרשים.</span>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+            <span class="tool-card-name">Claude Code</span>
+          </div>
+          <span class="tool-card-edge">Agentic Engineering — סוכן שחי בסביבת העבודה ומנהל את כל הקבצים עבורכם.</span>
+          <span class="tool-card-when"><strong>מתי?</strong> פיתוח מורכב, ניהול לוגיקה עמוקה, או שינויים רוחביים במוצר קיים דרך ה-Terminal.</span>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+            <span class="tool-card-name">Gemini / AI Studio</span>
+          </div>
+          <span class="tool-card-edge">Long Context & Multimodal — ״עיכול״ קבצי וידאו ארוכים, ספריות מסמכים ודאטה עצום.</span>
+          <span class="tool-card-when"><strong>מתי?</strong> ניתוח עומק של חומרי למידה, הפיכת וידאו לאינטראקטיבי, או Context Engineering גבוה.</span>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <span class="tool-card-name">Perplexity / NotebookLM</span>
+          </div>
+          <span class="tool-card-edge">Research & Knowledge — מחקר רשת בזמן אמת וארגון ידע מבוסס מקורות.</span>
+          <span class="tool-card-when"><strong>מתי?</strong> שלבי Ideation ומחקר, כתיבת תוכן מבוסס עובדות, וסיכום ספריות ידע פנים-ארגוניות.</span>
+        </div>
+      </div>
+
+      <div class="tools-tip">
+        <span class="tools-tip-text">💡 <b>Builder Mindset:</b> אל תחפשו את הכלי ״הכי טוב״ — חפשו את הכלי שמאפשר לכם לבנות MVP עובד במינימום זמן ומקסימום אימפקט.</span>
+      </div>
+    </div>
+
+    <!-- Slide 17 — Section Opener Part 3 -->
+    <div class="slide" data-layout="title">
+      <span class="slide-number">Part 3</span>
+      <h1>ה-L&D החדש</h1>
+      <p>איך Vibe Coding משדרג כל היבט בעבודה שלנו.</p>
+    </div>
+
+    <!-- Slide 18 — Content Revolution -->
+    <div class="slide" data-layout="mvp">
+      <div class="mvp-content">
+        <span class="slide-number">Content Revolution</span>
+        <h1>מהפכת התוכן – מהצגה לחוויה</h1>
+        <p class="mvp-subtitle">יצירת תוכן: ממצגות סטטיות לחוויות אינטראקטיביות</p>
+
+        <div class="mvp-points">
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">מעבר ל-Web</span>
+              <span class="mvp-point-desc">פיתוח מהיר של מיקרו-אתרים וכלים ללמידה מבוססת דפדפן.</span>
+            </div>
+          </div>
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">אינטראקטיביות כברירת מחדל</span>
+              <span class="mvp-point-desc">סימולציות משתנות בזמן אמת לפי קלט הלומד.</span>
+            </div>
+          </div>
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">התאמה אישית</span>
+              <span class="mvp-point-desc">ייצור תוכן דינמי שמתאים את עצמו לרמת הידע של המשתמש.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mvp-visual">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="browser-dots"><span></span><span></span><span></span></div>
+            <div class="browser-url">ai-risks.lovable.app</div>
+          </div>
+          <img src="assets/images/18 Medium.png" alt="Interactive Learning Experience">
+        </div>
+        <a class="prd-link" href="https://ai-risks.lovable.app" target="_blank" style="margin-top:16px;">
+          <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          צפו בדוגמה חיה
+        </a>
+      </div>
+    </div>
+
+    <!-- Slide 19 — AI Layer -->
+    <div class="slide" data-layout="mvp">
+      <div class="mvp-content">
+        <span class="slide-number">AI-Enhanced Learning</span>
+        <h1>שיפור החוויה – שכבת ה-AI</h1>
+        <p class="mvp-subtitle">הוספת ״שכבת AI״ חכמה לחוויית הלמידה</p>
+
+        <div class="mvp-points">
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">Tutor אישי</span>
+              <span class="mvp-point-desc">סוכן AI שמוצמד לכל קורס ועונה על שאלות מבוססות הקשר (Context).</span>
+            </div>
+          </div>
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">הנגשת ידע סטטי</span>
+              <span class="mvp-point-desc">הפיכת קבצי PDF ומסמכי מדיניות לצ׳אטבוטים חיים.</span>
+            </div>
+          </div>
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">מענה ברגע האמת</span>
+              <span class="mvp-point-desc">תמיכה בביצועים (Performance Support) ישירות בתוך זרימת העבודה.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mvp-visual">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="browser-dots"><span></span><span></span><span></span></div>
+            <div class="browser-url">localhost:3000</div>
+          </div>
+          <img src="assets/images/14.png" alt="AI Tutor Interface">
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 20 — Data & Dashboards -->
+    <div class="slide" data-layout="mvp">
+      <div class="mvp-content">
+        <span class="slide-number">Data-Driven L&D</span>
+        <h1>הדאטה החדש – תובנות בלחיצת כפתור</h1>
+        <p class="mvp-subtitle">דשבורדים מבוססי החלטות</p>
+
+        <div class="mvp-points">
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">ניתוח פערים (Gap Analysis)</span>
+              <span class="mvp-point-desc">זיהוי מהיר של פערי ידע בארגון ותרגומם לתוכנית עבודה.</span>
+            </div>
+          </div>
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">מדידת אימפקט</span>
+              <span class="mvp-point-desc">בניית כלים פנימיים למדידת ROI והשפעה על ה-Business KPIs.</span>
+            </div>
+          </div>
+          <div class="mvp-point">
+            <span class="mvp-point-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></span>
+            <div class="mvp-point-text">
+              <span class="mvp-point-title">נגישות לנתונים</span>
+              <span class="mvp-point-desc">הפיכת דוחות אקסל מורכבים לוויזואליזציה אינטואיטיבית ב״וייב״ מהיר.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mvp-visual">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="browser-dots"><span></span><span></span><span></span></div>
+            <div class="browser-url">dashboard.internal</div>
+          </div>
+          <div style="position:relative;">
+            <img src="assets/images/20.png" alt="Data Dashboard" style="display:block;width:100%;border-radius:0 0 10px 10px;">
+            <!-- Blur: top 3 big numbers (1,218 / 61.8 / 64.0) -->
+            <div style="position:absolute;top:19%;left:3%;width:30%;height:7%;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);"></div>
+            <div style="position:absolute;top:19%;left:35%;width:30%;height:7%;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);"></div>
+            <div style="position:absolute;top:19%;left:67%;width:30%;height:7%;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);"></div>
+            <!-- Blur: department numbers (60.6, 60.0, 760, 63.8, 64.0, 461) -->
+            <div style="position:absolute;top:40%;left:3%;width:44%;height:5%;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);"></div>
+            <div style="position:absolute;top:40%;left:52%;width:44%;height:5%;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);"></div>
+            <!-- Blur: chart y-axis numbers + bar labels -->
+            <div style="position:absolute;top:58%;left:1%;width:8%;height:37%;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);"></div>
+            <div style="position:absolute;top:60%;left:25%;width:50%;height:6%;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 21 — Agents & Automation -->
+    <div class="slide" data-layout="prd">
+      <div class="prd-content">
+        <span class="slide-number">Agents & Automation</span>
+        <h1>המנוע השקט – סוכנים ואוטומציה</h1>
+        <p class="prd-subtitle">אוטומציה וסוכנים: צוות ה-L&D הווירטואלי שלך</p>
+
+        <div class="prd-items">
+          <div class="prd-item">
+            <span class="prd-item-icon"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
+            ייעול ה-Operational — אוטומציה של משימות אדמיניסטרטיביות שוחקות.
+          </div>
+          <div class="prd-item">
+            <span class="prd-item-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            Scraping חכם — סוכנים שאוספים מידע מקצועי רלוונטי מהרשת באופן אוטומטי.
+          </div>
+          <div class="prd-item">
+            <span class="prd-item-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            העצמה מקצועית — גיוס ״סוכנים״ לתפקידים שלא היה ניתן לגייס אליהם.
+          </div>
+        </div>
+      </div>
+
+      <div class="prd-visual">
+        <div class="prd-frame prd-frame-large">
+          <img src="assets/images/21.png" alt="Automation & Agents">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+    <!-- Slide 22 — Part 4 Section Opener -->
+    <div class="slide" data-layout="title">
+      <span class="slide-number">Part 4</span>
+      <h1>Architecture 101</h1>
+      <p>הסקיל-סט החדש של פיתוח למידה — הבנת המבנה של אפליקציות מודרניות.</p>
+    </div>
+
+    <!-- Slide 23 — Architecture Diagram -->
+    <div class="slide" data-layout="prd" style="flex-direction:column;justify-content:center;align-items:center;gap:20px;">
+      <h1 style="text-align:center;width:100%;">Architecture for Dummies</h1>
+      <div class="prd-visual" style="flex:none;">
+        <div class="prd-frame prd-frame-large">
+          <img src="assets/images/23.1.png" alt="App Architecture">
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 24 — Part 4 continued: Claude Code -->
+    <div class="slide" data-layout="title">
+      <span class="slide-number">Part 4</span>
+      <h1>Claude Code</h1>
+      <p>הסוכן שגר בתוך המחשב שלכם.</p>
+    </div>
+
+    <!-- Slide 25 — Claude Code Deep Dive -->
+    <div class="slide" data-layout="prd">
+        <div class="prd-content">
+          <span class="slide-number">Claude Code</span>
+          <h2 class="heading-cc">הסוכן שמשנה את כללי המשחק</h2>
+          <div class="cc-points">
+            <div class="cc-point">
+              <span class="cc-point-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+              <div>
+                <div class="cc-point-title">ניהול פרויקטים מורכבים</div>
+                <div class="cc-point-desc">היכולת לבנות מוצרי למידה שלמים (End-to-End) בלי להכיר את התחביר המדויק של כל שפת תכנות.</div>
+              </div>
+            </div>
+            <div class="cc-point">
+              <span class="cc-point-icon"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></span>
+              <div>
+                <div class="cc-point-title">מסוכן שיחה לסוכן ביצוע</div>
+                <div class="cc-point-desc">הוא לא רק מציע קוד — הוא כותב אותו ישירות לתוך הקבצים, מריץ בדיקות ומתקן שגיאות.</div>
+              </div>
+            </div>
+            <div class="cc-point">
+              <span class="cc-point-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+              <div>
+                <div class="cc-point-title">הבנת הקשר מלאה</div>
+                <div class="cc-point-desc">הוא ״רואה״ את כל הפרויקט שלכם בבת אחת, לא רק את הקובץ הבודד שהדבקתם בצ׳אט.</div>
+              </div>
+            </div>
+            <div class="cc-point">
+              <span class="cc-point-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+              <div>
+                <div class="cc-point-title">מהירות תגובה</div>
+                <div class="cc-point-desc">ביצוע פעולות פיתוח מורכבות תוך שניות, מה שמאפשר לשמור על ה-Vibe של היצירה.</div>
+              </div>
+            </div>
+            <div class="cc-point">
+              <span class="cc-point-icon"><svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>
+              <div>
+                <div class="cc-point-title">פתיחת צווארי בקבוק</div>
+                <div class="cc-point-desc">אין יותר המתנה ל-IT עבור שינויים קטנים ב-UI או תיקון לוגיקה בדשבורד.</div>
+              </div>
+            </div>
+            <div class="cc-point">
+              <span class="cc-point-icon"><svg viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></span>
+              <div>
+                <div class="cc-point-title">Agentic Workflows</div>
+                <div class="cc-point-desc">יצירת תהליכי עבודה אוטונומיים שחוסכים זמן ומגדילים את ה-ROI של מחלקת הלמידה.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="terminal-frame">
+          <div class="terminal-bar">
+            <div class="browser-dots"><span></span><span></span><span></span></div>
+            <span class="terminal-bar-title">~/projects/ld-dashboard</span>
+          </div>
+          <div class="terminal-body">
+            <div><span class="terminal-prompt">$ </span><span class="terminal-cmd">claude "build a new dashboard for my L&D data"</span></div>
+            <div class="terminal-output">
+              <div style="margin-top:14px;color:#e6edf3;font-size:0.75rem;opacity:0.5;">⠋ Analyzing project structure...</div>
+              <div style="margin-top:12px;color:rgba(34,197,94,0.6);font-size:0.72rem;">✓ Created 7 files:</div>
+              <div class="file-created">&nbsp;&nbsp;├── src/Dashboard.tsx</div>
+              <div class="file-created">&nbsp;&nbsp;├── src/components/KPICard.tsx</div>
+              <div class="file-created">&nbsp;&nbsp;├── src/components/LearnerChart.tsx</div>
+              <div class="file-created">&nbsp;&nbsp;├── src/components/CompletionTable.tsx</div>
+              <div class="file-created">&nbsp;&nbsp;├── src/hooks/useLDData.ts</div>
+              <div class="file-created">&nbsp;&nbsp;├── src/utils/analytics.ts</div>
+              <div class="file-created">&nbsp;&nbsp;└── src/styles/dashboard.css</div>
+              <div style="margin-top:12px;color:rgba(34,197,94,0.6);font-size:0.72rem;">✓ All tests passing</div>
+              <div style="margin-top:4px;color:rgba(34,197,94,0.6);font-size:0.72rem;">✓ Dashboard ready at localhost:3000</div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- Slide 26 — Part 5 Section Opener -->
+    <div class="slide" data-layout="title">
+      <span class="slide-number">Part 5</span>
+      <h1>מהיום אתם L&D Builders</h1>
+    </div>
+
+    <!-- Slide 27 — Builder Checklist -->
+    <div class="slide" data-layout="prd" style="flex-direction:column;gap:20px;">
+      <span class="slide-number">The Builder's Checklist</span>
+      <h2 class="heading-checklist">הצ׳ק-ליסט של ה-Builder</h2>
+      <div class="checklist-wrap">
+        <div class="checklist-items">
+          <div class="checklist-item">
+            <span class="checklist-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div>
+              <div class="checklist-label">Ideation</div>
+              <div class="checklist-desc">להסתכל על כל בעיה כהזדמנות למוצר.</div>
+            </div>
+          </div>
+          <div class="checklist-item">
+            <span class="checklist-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div>
+              <div class="checklist-label">Product Mindset</div>
+              <div class="checklist-desc">אפיון (PRD) לפני ביצוע.</div>
+            </div>
+          </div>
+          <div class="checklist-item">
+            <span class="checklist-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div>
+              <div class="checklist-label">Context Engineering</div>
+              <div class="checklist-desc">הזרקת הידע וההקשר הנכון ל-AI.</div>
+            </div>
+          </div>
+          <div class="checklist-item">
+            <span class="checklist-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div>
+              <div class="checklist-label">MVP First</div>
+              <div class="checklist-desc">לבנות מהר, לבדוק בשטח, ולשפר בתנועה.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="checklist-icon-wrap">
+          <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 28 — Contact / Find Me -->
+    <div class="slide" data-layout="prd">
+      <div class="contact-wrapper">
+        <span class="slide-number">Let's Connect</span>
+        <h2 class="heading-contact">הזמן הכי טוב להתחיל הוא עכשיו</h2>
+        <p class="contact-subtitle">איפה מוצאים אותי?</p>
+        <div class="contact-cards">
+          <a href="https://avilevi.co.il/" target="_blank" class="contact-card">
+            <div class="contact-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            </div>
+            <div class="contact-card-name">הבלוג</div>
+            <div class="contact-card-handle">avilevi.co.il</div>
+            <div class="contact-card-desc">עולם הלמידה, ה-AI והפרודוקטיביות.</div>
+          </a>
+          <a href="https://github.com/booya1986" target="_blank" class="contact-card">
+            <div class="contact-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </div>
+            <div class="contact-card-name">GitHub</div>
+            <div class="contact-card-handle">booya1986</div>
+            <div class="contact-card-desc">כל ה-Templates והמדריכים (כולל PRD Template).</div>
+          </a>
+          <a href="https://www.linkedin.com/in/avi-levi-%F0%9F%87%AE%F0%9F%87%B1-59011491/" target="_blank" class="contact-card">
+            <div class="contact-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </div>
+            <div class="contact-card-name">LinkedIn</div>
+            <div class="contact-card-handle">אבי לוי</div>
+            <div class="contact-card-desc">מוביל למידה ו-Builder בנשמה.</div>
+          </a>
+          <a href="https://www.facebook.com/avi.j.levi" target="_blank" class="contact-card">
+            <div class="contact-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </div>
+            <div class="contact-card-name">Facebook</div>
+            <div class="contact-card-handle">Avi Levi</div>
+            <div class="contact-card-desc">עדכונים, שיתופים ודיונים מקצועיים.</div>
+          </a>
+          <a href="https://www.instagram.com/avi.j.levi/" target="_blank" class="contact-card">
+            <div class="contact-card-icon">
+              <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </div>
+            <div class="contact-card-name">Instagram</div>
+            <div class="contact-card-handle">@avi.j.levi</div>
+            <div class="contact-card-desc">מאחורי הקלעים של בניית מוצרים.</div>
+          </a>
+          <a href="https://www.tiktok.com/@avibooyalevi" target="_blank" class="contact-card">
+            <div class="contact-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" fill="none"/></svg>
+            </div>
+            <div class="contact-card-name">TikTok</div>
+            <div class="contact-card-handle">@avibooyalevi</div>
+            <div class="contact-card-desc">טיפים קצרים על AI, למידה ו-Vibe Coding.</div>
+          </a>
+          <a href="https://www.youtube.com/channel/UCdz7iR7sYg2gevHXEyeeM1Q" target="_blank" class="contact-card">
+            <div class="contact-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
+            </div>
+            <div class="contact-card-name">YouTube</div>
+            <div class="contact-card-handle">Avi Levi</div>
+            <div class="contact-card-desc">סרטונים על AI, למידה ובניית מוצרים.</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 29 — Closing Quote -->
+    <div class="slide" data-layout="quote">
+      <p class="quote-text quote-text-closing">Vibe Coding הוא לא רק קוד, הוא <mark>החופש שלכם</mark> לייצר פתרונות שמשנים מציאות בארגון.</p>
+    </div>
+
+  <!-- Navigation Buttons -->
+  <div class="nav-buttons">
+    <!-- Next (right arrow — appears on LEFT in RTL) -->
+    <button class="nav-btn" id="nextBtn" aria-label="Next slide">
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <!-- Previous (left arrow — appears on RIGHT in RTL) -->
+    <button class="nav-btn" id="prevBtn" aria-label="Previous slide">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+  </div>
+
+  <!-- Dot Navigation -->
+  <div class="dot-nav" id="dotNav"></div>
+
+  <!-- Keyboard Hint -->
+  <div class="keyboard-hint" id="keyboardHint">Use ← → arrow keys to navigate</div>
+
+  <script>
+    (() => {
+      const slides = document.querySelectorAll('.slide');
+      const dotNav = document.getElementById('dotNav');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const progressBar = document.getElementById('progressBar');
+      const keyboardHint = document.getElementById('keyboardHint');
+      let current = 0;
+      let isAnimating = false;
+
+      // Slide sound effects
+      const slideSounds = { 2: new Audio('assets/media/sound3.mp3') };
+
+      // Build dot navigation
+      slides.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.classList.add('dot');
+        if (i === 0) dot.classList.add('active');
+        dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+        dot.addEventListener('click', () => goTo(i));
+        dotNav.appendChild(dot);
+      });
+
+      function updateProgress() {
+        const pct = ((current + 1) / slides.length) * 100;
+        progressBar.style.width = pct + '%';
+      }
+
+      function updateButtons() {
+        nextBtn.disabled = current === 0;           // right "Back" button
+        prevBtn.disabled = current === slides.length - 1;  // left "Next" button
+      }
+
+      function goTo(index) {
+        if (index === current || isAnimating) return;
+        isAnimating = true;
+
+        const direction = index > current ? 'left' : 'right';
+        const prev = slides[current];
+        const next = slides[index];
+
+        // Exit current slide
+        prev.classList.remove('active');
+        prev.classList.add(direction === 'left' ? 'exit-left' : 'exit-right');
+
+        // Prepare incoming slide
+        next.style.transform = direction === 'left' ? 'translateX(-20px)' : 'translateX(20px)';
+        next.classList.add('active');
+
+        // Force reflow so the transform applies before transition
+        void next.offsetWidth;
+        next.style.transform = '';
+
+        // Update dots
+        document.querySelectorAll('.dot').forEach((d, i) => {
+          d.classList.toggle('active', i === index);
+        });
+
+        // Auto-scroll dot nav to keep active dot visible
+        const activeDot = document.querySelectorAll('.dot')[index];
+        if (activeDot) {
+          activeDot.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+
+        current = index;
+        updateProgress();
+        updateButtons();
+
+        // Play sound effect if one exists for this slide
+        if (slideSounds[index]) {
+          slideSounds[index].currentTime = 0;
+          slideSounds[index].play();
+        }
+
+        setTimeout(() => {
+          prev.classList.remove('exit-left', 'exit-right');
+          isAnimating = false;
+        }, 500);
+      }
+
+      function next() {
+        if (current < slides.length - 1) goTo(current + 1);
+      }
+
+      function prev() {
+        if (current > 0) goTo(current - 1);
+      }
+
+      nextBtn.addEventListener('click', prev);
+      prevBtn.addEventListener('click', next);
+
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') next();
+        if (e.key === 'ArrowRight') prev();
+        keyboardHint.classList.add('hidden');
+      });
+
+      // Touch / swipe support with vertical/horizontal discrimination
+      let touchStartX = 0;
+      let touchStartY = 0;
+      document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      });
+      document.addEventListener('touchend', (e) => {
+        const diffX = e.changedTouches[0].screenX - touchStartX;
+        const diffY = e.changedTouches[0].screenY - touchStartY;
+        // Only navigate if swipe is predominantly horizontal
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+          if (diffX > 0) next();
+          else prev();
+        }
+      });
+
+      // Init
+      updateProgress();
+      updateButtons();
+
+      // Hide keyboard hint after 5 seconds
+      setTimeout(() => keyboardHint.classList.add('hidden'), 5000);
+    })();
+  </script>
+
+</body>
+</html>
