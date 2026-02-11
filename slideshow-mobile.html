@@ -238,6 +238,56 @@
       display: none;
     }
 
+    /* ── Swipe Hint Animation ── */
+    .swipe-hint {
+      position: fixed;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 90;
+      opacity: 1;
+      transition: opacity 0.6s ease;
+    }
+
+    .swipe-hint.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .swipe-hint-hand {
+      width: 32px;
+      height: 32px;
+      animation: swipeLeft 1.8s ease-in-out infinite;
+    }
+
+    .swipe-hint-hand svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: #c5c1b9;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.4));
+    }
+
+    .swipe-hint-text {
+      font-size: 0.72rem;
+      color: #a09d96;
+      letter-spacing: 1px;
+    }
+
+    @keyframes swipeLeft {
+      0% { transform: translateX(20px); opacity: 0.3; }
+      30% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { transform: translateX(-20px); opacity: 0.3; }
+    }
+
     /* ── Slide Variants (for different content layouts) ── */
     .slide[data-layout="title"] {
       background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.03) 40%, transparent 70%);
@@ -371,12 +421,12 @@
     /* ── Quote Slide ── */
     .slide[data-layout="quote"] {
       background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
-      padding: 14px 20px 36px;
+      padding: 14px 44px 36px;
       gap: 0;
     }
 
     .slide .quote-text {
-      font-size: clamp(1.05rem, 5vw, 1.4rem);
+      font-size: clamp(0.95rem, 4.2vw, 1.25rem);
       font-weight: 300;
       color: #c5c1b9;
       text-align: center;
