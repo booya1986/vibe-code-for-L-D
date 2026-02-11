@@ -940,23 +940,40 @@
 
     /* Contact layout (slide 28) */
     .contact-cards {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 22px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 16px;
       margin-top: 10px;
-      justify-content: center;
-      max-width: 900px;
+      max-width: 1050px;
+      width: 100%;
+    }
+
+    .contact-card:nth-child(-n+4) {
+      grid-column: span 2;
+    }
+
+    .contact-card:nth-child(5) {
+      grid-column: 2 / span 2;
+    }
+
+    .contact-card:nth-child(6) {
+      grid-column: 4 / span 2;
+    }
+
+    .contact-card:nth-child(7) {
+      grid-column: 6 / span 2;
     }
 
     .contact-card {
-      flex: 0 1 calc(33.333% - 16px);
-      min-width: 240px;
-      padding: 32px 26px;
+      padding: 24px 18px;
       border-radius: 16px;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(34, 197, 94, 0.15);
       text-align: center;
       transition: border-color 0.3s, box-shadow 0.3s;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
     }
 
     .contact-card:hover {
@@ -2264,54 +2281,62 @@
         <h2 style="font-size:1.8rem;text-align:center;">הזמן הכי טוב להתחיל הוא עכשיו</h2>
         <p style="font-size:1rem;color:#a09d96;font-weight:300;text-align:center;">איפה מוצאים אותי?</p>
         <div class="contact-cards">
-          <div class="contact-card">
+          <a href="https://avilevi.co.il/" target="_blank" class="contact-card">
             <div class="contact-card-icon">
               <svg viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
             </div>
             <div class="contact-card-name">הבלוג</div>
             <div class="contact-card-handle">avilevi.co.il</div>
             <div class="contact-card-desc">עולם הלמידה, ה-AI והפרודוקטיביות.</div>
-          </div>
-          <div class="contact-card">
+          </a>
+          <a href="https://github.com/booya1986" target="_blank" class="contact-card">
             <div class="contact-card-icon">
               <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
             </div>
             <div class="contact-card-name">GitHub</div>
             <div class="contact-card-handle">booya1986</div>
             <div class="contact-card-desc">כל ה-Templates והמדריכים (כולל PRD Template).</div>
-          </div>
-          <div class="contact-card">
+          </a>
+          <a href="https://www.linkedin.com/in/avi-levi-%F0%9F%87%AE%F0%9F%87%B1-59011491/" target="_blank" class="contact-card">
             <div class="contact-card-icon">
               <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
             </div>
             <div class="contact-card-name">LinkedIn</div>
             <div class="contact-card-handle">אבי לוי</div>
             <div class="contact-card-desc">מוביל למידה ו-Builder בנשמה.</div>
-          </div>
-          <div class="contact-card">
+          </a>
+          <a href="https://www.facebook.com/avi.j.levi" target="_blank" class="contact-card">
             <div class="contact-card-icon">
               <svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
             </div>
             <div class="contact-card-name">Facebook</div>
             <div class="contact-card-handle">Avi Levi</div>
             <div class="contact-card-desc">עדכונים, שיתופים ודיונים מקצועיים.</div>
-          </div>
-          <div class="contact-card">
+          </a>
+          <a href="https://www.instagram.com/avi.j.levi/" target="_blank" class="contact-card">
             <div class="contact-card-icon">
               <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
             </div>
             <div class="contact-card-name">Instagram</div>
-            <div class="contact-card-handle">@avilevi</div>
+            <div class="contact-card-handle">@avi.j.levi</div>
             <div class="contact-card-desc">מאחורי הקלעים של בניית מוצרים.</div>
-          </div>
-          <div class="contact-card">
+          </a>
+          <a href="https://www.tiktok.com/@avibooyalevi" target="_blank" class="contact-card">
             <div class="contact-card-icon">
               <svg viewBox="0 0 24 24"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" fill="none"/></svg>
             </div>
             <div class="contact-card-name">TikTok</div>
-            <div class="contact-card-handle">@avilevi</div>
+            <div class="contact-card-handle">@avibooyalevi</div>
             <div class="contact-card-desc">טיפים קצרים על AI, למידה ו-Vibe Coding.</div>
-          </div>
+          </a>
+          <a href="https://www.youtube.com/channel/UCdz7iR7sYg2gevHXEyeeM1Q" target="_blank" class="contact-card">
+            <div class="contact-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
+            </div>
+            <div class="contact-card-name">YouTube</div>
+            <div class="contact-card-handle">Avi Levi</div>
+            <div class="contact-card-desc">סרטונים על AI, למידה ובניית מוצרים.</div>
+          </a>
         </div>
       </div>
     </div>
